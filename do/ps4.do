@@ -40,8 +40,7 @@ set seed 15
 forvalues p = 1/11{
 	
 	quietly{
-	local theta = -1 
-	//+ (`p' - 1)*0.2
+	local theta = -1 + (`p' - 1)*0.2
 	
 	set obs 1000
 
@@ -49,7 +48,7 @@ forvalues p = 1/11{
 
 	bys j: gen i = _n
 
-	gen D = _n>50
+	gen D = _n>500
 	bys j: gen W = _n > 5
 	
 	gen D_W = D*W
@@ -75,12 +74,12 @@ forvalues p = 1/11{
 	gen tao_W = (Y_01 - Y_00)
 	
 	
-	
 	local i = 0
 	foreach v in " " "D_W"{
 		local i = `i' + 1
 		
-		reg Y_ij D W `v' , robust
+		
+		reg Y_ij D W `v' , cluster(j)
 		
 		
 		local D_`i'_l = r(table)[1,1]
@@ -97,7 +96,9 @@ forvalues p = 1/11{
 		
 	}
 	
-	reg Y_ij W i.j
+	reg Y_ij W i.j , cluster(j)
+	
+	
 	local FEcoef_l = r(table)[1,1]
 	
 	
@@ -137,15 +138,33 @@ frame change measures
 
 foreach t in "D" "W"{
 	forvalues i = 1/2{
+		
+		if `i' == 1{
+			local main "No cross-term"
+			
+		}
+		
+		else{
+			local main "With cross term"
+		}
+		
 		gen upper = 1.96*V`t'_`i' + `t'_`i' 
 
 		gen lower  = -1.96*V`t'_`i' + `t'_`i'
 		
-		graph twoway (rcap upper lower theta) (scatter `t'_`i' theta) (scatter tao_`t' theta), legend(label(1 "95% CI") label(2 "Estimate") label(3 "True estimand"))
+		graph twoway (rcap upper lower theta) (scatter `t'_`i' theta) (scatter tao_`t' theta), name(p_`i', replace) legend(label(1 "95% CI") label(2 "Estimate") label(3 "True estimand") cols(3) ) title("`main'")
 		
-		graph export "bilder\\`t'_`i'.png", replace
 		
 		drop upper lower
+		
+		if `i' == 2{
+		grc1leg2 p_1 p_2, title("Coefficient on `t'")
+		
+		graph export "bilder\\`t'_dubbel.png", replace
+		
+		}
+		
+		
 	}
 	
 }
@@ -168,7 +187,7 @@ gen j = floor((_n+9)/10)
 
 bys j: gen i = _n
 
-gen D = _n>50
+gen D = _n>500
 bys j: gen W = _n > 5
 	
 gen D_W = D*W
@@ -256,7 +275,7 @@ gen FE_bayes = mu_hat + lambda*(Y_bar_j - mu_hat)
 preserve
 collapse (first) FE implied_mu mu_j implied_mu_2 FE_bayes, by(j)
 
-twoway pcarrow FE mu_j FE_bayes mu_j, ytitle("Standard mean/Emprical Bayes mean") xtitle("True estimand")
+twoway (pcarrow FE mu_j FE_bayes mu_j) (line mu_j mu_j), ytitle("Standard mean/Emprical Bayes mean") xtitle("True estimand")
 
 graph export "bilder\scatterFE2.png", replace
 restore
