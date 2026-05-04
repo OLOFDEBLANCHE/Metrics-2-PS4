@@ -1,4 +1,4 @@
-cd "C:\Users\olofd\PhD\Mertrics 2\PS\4"
+cd "C:\Users\24693\OneDrive - Handelshögskolan i Stockholm\Documents\Plugg\Metrics 2\PS\4\Metrics-2-PS4"
 
 clear all 
 
@@ -243,7 +243,7 @@ egen error_sum = sum(abs_error)
 preserve
 collapse (first) FE implied_mu mu_j implied_mu_2, by(j)
 
-twoway(scatter FE mu_j) (line mu_j mu_j), xtitle("True estimand") ytitle("Estimate") legend(off)
+twoway(scatter FE mu_j) (line mu_j mu_j), xtitle("True estimand") ytitle("Estimate") legend(order(2 "X=Y") pos(6))
 
 graph export "bilder\scatterFE.png", replace
 restore
@@ -275,7 +275,9 @@ gen FE_bayes = mu_hat + lambda*(Y_bar_j - mu_hat)
 preserve
 collapse (first) FE implied_mu mu_j implied_mu_2 FE_bayes, by(j)
 
-twoway (pcarrow FE mu_j FE_bayes mu_j) (line mu_j mu_j), ytitle("Standard mean/Emprical Bayes mean") xtitle("True estimand")
+twoway (pcarrow FE mu_j FE_bayes mu_j) (line mu_j mu_j), ytitle("Standard mean/Emprical Bayes mean") xtitle("True estimand") legend(order(2 "X=Y") pos(6))
+
+twoway (scatter FE mu_j) (line mu_j mu_j)
 
 graph export "bilder\scatterFE2.png", replace
 restore
@@ -362,10 +364,10 @@ foreach T in 200 5{
 	
 	
 	
-	twoway (scatter est_a relative_a) (line relative_a relative_a), name(ind, replace)
-	twoway (scatter est_q relative_q) (line relative_q relative_q), name(machine, replace)
+	twoway (scatter est_a relative_a) (line relative_a relative_a), xtitle("True {&alpha}, relative i = 0") ytitle("Estimate") legend(order(2 "X=Y") pos(6))  name(ind, replace)
+	twoway (scatter est_q relative_q) (line relative_q relative_q), xtitle("True {&psi}, relative i = 0") ytitle("Estimate") legend(order(2 "X=Y") pos(6)) name(machine, replace)
 	
-	graph combine ind machine
+	graph combine ind machine, title("T = `T'")
 	
 	graph export "bilder\N_`T'.png", replace
 	}
